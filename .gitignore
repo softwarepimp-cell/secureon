@@ -1,0 +1,25 @@
+# Local/editor
+.vscode/
+*.code-workspace
+
+# Environment and secrets
+.env
+.env.*
+*.key
+*.pem
+
+# Runtime/storage
+storage/backups/
+storage/logs/
+storage/tmp/
+storage/ratelimit/
+
+# OS/filesystem
+.DS_Store
+Thumbs.db
+
+# Temporary/local artifacts
+*.zip
+NewTextDocument.php
+New Text Document.php
+New Text Document.txt

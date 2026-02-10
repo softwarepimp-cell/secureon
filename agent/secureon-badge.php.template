@@ -1,0 +1,282 @@
+<?php
+$SECUREON_BADGE = [
+    'secureon_base_url' => '__SECUREON_BASE_URL__',
+    'system_id' => __SYSTEM_ID__,
+    'badge_token' => '__BADGE_TOKEN__',
+    'position' => '__POSITION__',
+    'theme' => '__THEME__',
+    'link_to_dashboard' => __LINK_TO_DASHBOARD__,
+    'cache_seconds' => __CACHE_SECONDS__,
+    'cache_dir' => __DIR__ . '/cache',
+    'timeout_seconds' => __TIMEOUT_SECONDS__,
+    'minimal_mode' => __MINIMAL_MODE__,
+    'show_powered_by' => __SHOW_POWERED_BY__,
+    'show_tooltip' => __SHOW_TOOLTIP__,
+    'custom_class' => '',
+    'custom_css' => '',
+];
+
+if (!function_exists('secureon_badge_render')) {
+    function secureon_badge_cfg(array $cfg): array
+    {
+        $defaults = [
+            'secureon_base_url' => '',
+            'system_id' => 0,
+            'badge_token' => '',
+            'position' => 'bottom-right',
+            'theme' => 'auto',
+            'link_to_dashboard' => true,
+            'cache_seconds' => 60,
+            'cache_dir' => __DIR__ . '/cache',
+            'timeout_seconds' => 3,
+            'minimal_mode' => true,
+            'show_powered_by' => true,
+            'show_tooltip' => true,
+            'custom_class' => '',
+            'custom_css' => '',
+        ];
+        $cfg = array_merge($defaults, $cfg);
+        $cfg['position'] = in_array($cfg['position'], ['top-right', 'bottom-right', 'bottom-left', 'top-left'], true)
+            ? $cfg['position']
+            : 'bottom-right';
+        $cfg['theme'] = in_array($cfg['theme'], ['auto', 'light', 'dark'], true)
+            ? $cfg['theme']
+            : 'auto';
+        $cfg['cache_seconds'] = max(10, (int)$cfg['cache_seconds']);
+        $cfg['timeout_seconds'] = max(1, (int)$cfg['timeout_seconds']);
+        $cfg['system_id'] = (int)$cfg['system_id'];
+        return $cfg;
+    }
+
+    function secureon_badge_cache_file(array $cfg): string
+    {
+        $dir = (string)$cfg['cache_dir'];
+        if (!is_dir($dir)) {
+            @mkdir($dir, 0755, true);
+        }
+        if (!is_dir($dir) || !is_writable($dir)) {
+            $dir = sys_get_temp_dir();
+        }
+        return rtrim($dir, '/\\') . DIRECTORY_SEPARATOR . 'secureon_badge_' . $cfg['system_id'] . '.json';
+    }
+
+    function secureon_badge_read_cache(string $file): ?array
+    {
+        if (!is_file($file)) {
+            return null;
+        }
+        $raw = @file_get_contents($file);
+        if ($raw === false) {
+            return null;
+        }
+        $decoded = json_decode($raw, true);
+        return is_array($decoded) ? $decoded : null;
+    }
+
+    function secureon_badge_write_cache(string $file, array $data): void
+    {
+        @file_put_contents($file, json_encode($data));
+    }
+
+    function secureon_badge_http_get(string $url, string $token, int $timeout): array
+    {
+        $headers = [
+            'Accept: application/json',
+            'Authorization: Bearer ' . $token,
+        ];
+
+        if (function_exists('curl_init')) {
+            $ch = curl_init($url);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+            curl_setopt($ch, CURLOPT_TIMEOUT, $timeout);
+            $body = curl_exec($ch);
+            $status = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            $error = curl_error($ch);
+            curl_close($ch);
+            if ($body !== false && $status > 0) {
+                return ['ok' => true, 'status' => $status, 'body' => $body];
+            }
+            return ['ok' => false, 'status' => 0, 'error' => $error ?: 'cURL request failed'];
+        }
+
+        if (filter_var(ini_get('allow_url_fopen'), FILTER_VALIDATE_BOOLEAN)) {
+            $ctx = stream_context_create([
+                'http' => [
+                    'method' => 'GET',
+                    'timeout' => $timeout,
+                    'header' => implode("\r\n", $headers),
+                ],
+            ]);
+            $body = @file_get_contents($url, false, $ctx);
+            $status = 0;
+            if (isset($http_response_header) && is_array($http_response_header)) {
+                foreach ($http_response_header as $line) {
+                    if (preg_match('#HTTP/\S+\s+(\d{3})#', $line, $m)) {
+                        $status = (int)$m[1];
+                        break;
+                    }
+                }
+            }
+            if ($body !== false && $status > 0) {
+                return ['ok' => true, 'status' => $status, 'body' => $body];
+            }
+            return ['ok' => false, 'status' => $status, 'error' => 'HTTP request failed'];
+        }
+
+        return ['ok' => false, 'status' => 0, 'error' => 'No HTTP transport available'];
+    }
+
+    function secureon_badge_fetch_status(array $cfg): array
+    {
+        $cacheFile = secureon_badge_cache_file($cfg);
+        $cache = secureon_badge_read_cache($cacheFile);
+        $now = time();
+        $cachedData = is_array($cache['data'] ?? null) ? $cache['data'] : null;
+        $cachedAt = (int)($cache['fetched_at'] ?? 0);
+
+        if ($cachedData && $cachedAt > 0 && (($now - $cachedAt) < (int)$cfg['cache_seconds'])) {
+            return $cachedData;
+        }
+
+        $endpoint = rtrim((string)$cfg['secureon_base_url'], '/') . '/api/v1/badge/status?system_id=' . rawurlencode((string)$cfg['system_id']);
+        $response = secureon_badge_http_get($endpoint, (string)$cfg['badge_token'], (int)$cfg['timeout_seconds']);
+        if (($response['ok'] ?? false) === true && (int)($response['status'] ?? 0) >= 200 && (int)($response['status'] ?? 0) < 300) {
+            $decoded = json_decode((string)($response['body'] ?? ''), true);
+            if (is_array($decoded) && !empty($decoded['ok'])) {
+                secureon_badge_write_cache($cacheFile, ['fetched_at' => $now, 'data' => $decoded]);
+                return $decoded;
+            }
+        }
+
+        if ($cachedData) {
+            $cachedData['status'] = 'unreachable';
+            $cachedData['message'] = 'Secureon unreachable (showing last known state)';
+            return $cachedData;
+        }
+
+        return [
+            'ok' => false,
+            'system_id' => (int)$cfg['system_id'],
+            'system_name' => 'System ' . (int)$cfg['system_id'],
+            'status' => 'unreachable',
+            'last_backup_at' => null,
+            'last_backup_status' => null,
+            'message' => 'Secureon unreachable',
+            'dashboard_url' => rtrim((string)$cfg['secureon_base_url'], '/') . '/systems/' . (int)$cfg['system_id'],
+        ];
+    }
+
+    function secureon_badge_status_meta(string $status): array
+    {
+        $status = strtolower(trim($status));
+        if ($status === 'healthy') {
+            return ['label' => 'Healthy', 'dot' => '#16a34a'];
+        }
+        if ($status === 'warning') {
+            return ['label' => 'Warning', 'dot' => '#d97706'];
+        }
+        if ($status === 'failed') {
+            return ['label' => 'Failed', 'dot' => '#dc2626'];
+        }
+        if ($status === 'billing_required') {
+            return ['label' => 'Billing Required', 'dot' => '#6b7280'];
+        }
+        if ($status === 'unreachable') {
+            return ['label' => 'Unreachable', 'dot' => '#6b7280'];
+        }
+        return ['label' => 'Unknown', 'dot' => '#6b7280'];
+    }
+
+    function secureon_badge_position_css(string $position): string
+    {
+        if ($position === 'top-right') {
+            return 'top:14px;right:14px;';
+        }
+        if ($position === 'top-left') {
+            return 'top:14px;left:14px;';
+        }
+        if ($position === 'bottom-left') {
+            return 'bottom:14px;left:14px;';
+        }
+        return 'bottom:14px;right:14px;';
+    }
+
+    function secureon_badge_esc($value): string
+    {
+        return htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8');
+    }
+
+    function secureon_badge_render(array $cfg): void
+    {
+        $cfg = secureon_badge_cfg($cfg);
+        if ($cfg['system_id'] <= 0 || trim((string)$cfg['badge_token']) === '') {
+            return;
+        }
+
+        $payload = secureon_badge_fetch_status($cfg);
+        $meta = secureon_badge_status_meta((string)($payload['status'] ?? 'unknown'));
+        $lastBackup = $payload['last_backup_at'] ?? null;
+        $lastBackupText = $lastBackup ? (string)$lastBackup : 'N/A';
+        $positionCss = secureon_badge_position_css((string)$cfg['position']);
+        $themeClass = 'secureon-badge--' . ($cfg['theme'] === 'dark' ? 'dark' : ($cfg['theme'] === 'light' ? 'light' : 'auto'));
+        $customClass = trim((string)$cfg['custom_class']);
+        $rootClass = trim('secureon-badge ' . $themeClass . ' ' . $customClass);
+
+        $dashboardUrl = (string)($payload['dashboard_url'] ?? '');
+        if ($dashboardUrl === '') {
+            $dashboardUrl = rtrim((string)$cfg['secureon_base_url'], '/') . '/systems/' . (int)$cfg['system_id'];
+        }
+        $statusLabel = $meta['label'];
+        $statusMessage = (string)($payload['message'] ?? '');
+        $systemName = (string)($payload['system_name'] ?? ('System ' . (int)$cfg['system_id']));
+        $tooltipText = 'Status: ' . $statusLabel . "\n" .
+            'Last backup: ' . $lastBackupText . "\n" .
+            'System: ' . $systemName . "\n" .
+            'Powered by Secureon.cloud';
+        ?>
+<style>
+.secureon-badge{position:fixed;<?= $positionCss ?>z-index:9999;max-width:220px;background:var(--sob-bg,#ffffff);color:var(--sob-text,#0f172a);border:1px solid var(--sob-border,#cbd5e1);border-radius:10px;padding:8px 10px;box-shadow:0 4px 12px rgba(0,0,0,.12);font:12px/1.2 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;opacity:.97}
+.secureon-badge a{color:inherit;text-decoration:none;display:block}
+.secureon-badge__row{display:flex;align-items:center;gap:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.secureon-badge__dot{width:8px;height:8px;border-radius:999px;display:inline-block;background:<?= secureon_badge_esc($meta['dot']) ?>;flex:0 0 auto}
+.secureon-badge__title{font-weight:600}
+.secureon-badge__sub{margin-top:4px;color:var(--sob-muted,#64748b)}
+.secureon-badge__powered{margin-top:4px;font-size:11px;color:var(--sob-muted,#64748b)}
+.secureon-badge__tooltip{position:absolute;display:none;right:0;bottom:calc(100% + 8px);width:220px;background:#111827;color:#f9fafb;border-radius:8px;padding:8px;white-space:pre-line;box-shadow:0 8px 18px rgba(0,0,0,.2);font-size:11px;line-height:1.35}
+.secureon-badge:hover .secureon-badge__tooltip{display:block}
+.secureon-badge--dark{--sob-bg:#0f172a;--sob-text:#e2e8f0;--sob-muted:#94a3b8;--sob-border:#334155}
+.secureon-badge--light{--sob-bg:#ffffff;--sob-text:#0f172a;--sob-muted:#64748b;--sob-border:#cbd5e1}
+.secureon-badge--auto{--sob-bg:#ffffff;--sob-text:#0f172a;--sob-muted:#64748b;--sob-border:#cbd5e1}
+<?php if (!empty($cfg['custom_css'])): ?>
+<?= (string)$cfg['custom_css'] . "\n" ?>
+<?php endif; ?>
+</style>
+<div class="<?= secureon_badge_esc($rootClass) ?>">
+  <?php $tagOpen = !empty($cfg['link_to_dashboard']) ? '<a href="' . secureon_badge_esc($dashboardUrl) . '" target="_blank" rel="noopener noreferrer">' : '<div>'; ?>
+  <?php $tagClose = !empty($cfg['link_to_dashboard']) ? '</a>' : '</div>'; ?>
+  <?= $tagOpen ?>
+    <div class="secureon-badge__row">
+      <span class="secureon-badge__dot" aria-hidden="true"></span>
+      <span class="secureon-badge__title">Secureon: <?= secureon_badge_esc($statusLabel) ?></span>
+    </div>
+    <?php if (empty($cfg['minimal_mode'])): ?>
+      <div class="secureon-badge__sub">Last backup: <?= secureon_badge_esc($lastBackupText) ?></div>
+      <?php if ($statusMessage !== ''): ?>
+        <div class="secureon-badge__sub"><?= secureon_badge_esc($statusMessage) ?></div>
+      <?php endif; ?>
+    <?php endif; ?>
+    <?php if (!empty($cfg['show_powered_by'])): ?>
+      <div class="secureon-badge__powered">Powered by Secureon</div>
+    <?php endif; ?>
+    <?php if (!empty($cfg['show_tooltip'])): ?>
+      <div class="secureon-badge__tooltip"><?= secureon_badge_esc($tooltipText) ?></div>
+    <?php endif; ?>
+  <?= $tagClose ?>
+</div>
+<?php
+    }
+}
+
+secureon_badge_render($SECUREON_BADGE);
+

@@ -1,0 +1,17 @@
+<?php
+return [
+    'system_id' => 1,
+    'system_secret' => 'PASTE_SYSTEM_SECRET_HERE',
+    'agent_token' => 'PASTE_TOKEN_HERE',
+    'secureon_base_url' => 'https://your-secureon-domain.com',
+    'db_host' => '127.0.0.1',
+    'db_user' => 'your_db_user',
+    'db_pass' => '',
+    'db_name' => 'your_db_name',
+    'mysqldump_path' => 'mysqldump',
+    'mysql_path' => 'mysql',
+    'master_key' => 'SET_TO_SECUREON_APP_KEY',
+    'allowed_ips' => '',
+    'interval_minutes' => 60,
+    'dev_mode' => false,
+];
