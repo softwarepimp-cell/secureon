@@ -22,7 +22,7 @@
       <div>Proof reference: <span class="font-semibold text-ink"><?= App\Core\Helpers::e($request['proof_reference']) ?></span></div>
       <div>Proof note: <span class="font-semibold text-ink"><?= App\Core\Helpers::e($request['proof_note'] ?? '') ?></span></div>
       <div>Status: <span class="font-semibold text-ink"><?= App\Core\Helpers::e($request['status']) ?></span></div>
-      <div>Submitted: <span class="font-semibold text-ink"><?= App\Core\Helpers::e($request['created_at']) ?></span></div>
+      <div>Submitted: <span class="font-semibold text-ink"><?= App\Core\Helpers::formatDateTime($request['created_at']) ?></span></div>
     </div>
   </div>
 
@@ -33,7 +33,7 @@
       <div>Current storage: <span class="font-semibold text-ink"><?= App\Core\Helpers::formatBytes((int)$usage['storage_bytes']) ?></span></div>
       <div>Subscription status: <span class="font-semibold text-ink"><?= App\Core\Helpers::e($latest_subscription['status'] ?? 'none') ?></span></div>
       <div>Subscription plan: <span class="font-semibold text-ink"><?= App\Core\Helpers::e($latest_subscription['plan_name'] ?? 'N/A') ?></span></div>
-      <div>Ends at: <span class="font-semibold text-ink"><?= App\Core\Helpers::e($latest_subscription['ends_at'] ?? 'N/A') ?></span></div>
+      <div>Ends at: <span class="font-semibold text-ink"><?= App\Core\Helpers::formatDateTime($latest_subscription['ends_at'] ?? null) ?></span></div>
       <div>Allowed systems: <span class="font-semibold text-ink"><?= (int)($latest_subscription['allowed_systems'] ?? 0) ?></span></div>
     </div>
   </div>
@@ -46,7 +46,7 @@
       <?= App\Core\Helpers::csrfField() ?>
       <div>
         <label class="text-sm text-slate-600">Start date/time</label>
-        <input type="datetime-local" name="approved_started_at" value="<?= date('Y-m-d\TH:i') ?>" class="mt-1 w-full px-3 py-2 rounded border border-slate-300">
+        <input type="datetime-local" name="approved_started_at" value="<?= App\Core\Helpers::formatDateTimeInput() ?>" class="mt-1 w-full px-3 py-2 rounded border border-slate-300">
       </div>
       <div>
         <label class="text-sm text-slate-600">End date/time (optional override)</label>
@@ -102,11 +102,11 @@
     </div>
     <div>
       <label class="text-sm text-slate-600">Start</label>
-      <input type="datetime-local" name="started_at" value="<?= date('Y-m-d\TH:i') ?>" class="mt-1 w-full px-3 py-2 rounded border border-slate-300">
+      <input type="datetime-local" name="started_at" value="<?= App\Core\Helpers::formatDateTimeInput() ?>" class="mt-1 w-full px-3 py-2 rounded border border-slate-300">
     </div>
     <div>
       <label class="text-sm text-slate-600">End</label>
-      <input type="datetime-local" name="ends_at" value="<?= date('Y-m-d\TH:i', strtotime('+1 month')) ?>" class="mt-1 w-full px-3 py-2 rounded border border-slate-300">
+      <input type="datetime-local" name="ends_at" value="<?= App\Core\Helpers::formatDateTimeInput(strtotime('+1 month')) ?>" class="mt-1 w-full px-3 py-2 rounded border border-slate-300">
     </div>
     <div class="flex items-end">
       <button class="bg-brand text-white px-4 py-2 rounded hover:bg-brandDark">Apply Adjustment</button>
@@ -114,4 +114,3 @@
   </form>
 </div>
 <?php $content = ob_get_clean(); $pageTitle = 'Billing Request'; include __DIR__ . '/../layouts/app.php'; ?>
-

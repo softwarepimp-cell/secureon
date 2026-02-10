@@ -22,16 +22,26 @@ class Auth
     {
         $user = User::findByEmail($email);
         if ($user && password_verify($password, $user['password_hash'])) {
-            self::login($user['id']);
+            self::login((int)$user['id'], $user);
             return true;
         }
         return false;
     }
 
-    public static function login($userId)
+    public static function login($userId, ?array $user = null)
     {
         session_regenerate_id(true);
         $_SESSION['user_id'] = $userId;
+
+        if ($user === null) {
+            $user = User::find($userId) ?: [];
+        }
+        $timezone = (string)($user['timezone'] ?? '');
+        if ($timezone !== '' && Helpers::isValidTimezone($timezone)) {
+            Helpers::setUserTimezone($timezone);
+        } else {
+            Helpers::setUserTimezone(Helpers::appTimezone());
+        }
     }
 
     public static function logout()

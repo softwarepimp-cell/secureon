@@ -45,11 +45,11 @@
     <div class="mt-3 h-2 bg-slate-200 rounded">
       <div class="h-2 bg-brand rounded" :style="'width:' + progress + '%'"></div>
     </div>
-    <div class="mt-3 text-xs text-slate-500">Next scheduled trigger: <?= App\Core\Helpers::e($next_trigger ?? 'N/A') ?></div>
+    <div class="mt-3 text-xs text-slate-500">Next scheduled trigger: <?= App\Core\Helpers::formatDateTime($next_trigger ?? null) ?></div>
   </div>
   <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
     <div class="font-semibold">Trigger status</div>
-    <div class="mt-2 text-sm text-slate-600">Last trigger: <?= App\Core\Helpers::e($system['last_trigger_at'] ?? 'N/A') ?></div>
+    <div class="mt-2 text-sm text-slate-600">Last trigger: <?= App\Core\Helpers::formatDateTime($system['last_trigger_at'] ?? null) ?></div>
     <div class="text-sm text-slate-600">Status: <?= App\Core\Helpers::e($system['last_trigger_status'] ?? 'N/A') ?></div>
     <div class="text-sm text-slate-600">Latency: <?= App\Core\Helpers::e($system['last_trigger_latency_ms'] ?? 'N/A') ?> ms</div>
     <div class="text-sm text-slate-600">Message: <?= App\Core\Helpers::e($system['last_trigger_message'] ?? '') ?></div>
@@ -120,7 +120,7 @@
         </div>
       <?php endif; ?>
       <?php if (!empty($badge_token_preview)): ?>
-        <div class="text-xs text-slate-500">Latest active badge token: <?= App\Core\Helpers::e($badge_token_preview['token_prefix'] ?? '') ?>**** created <?= App\Core\Helpers::e($badge_token_preview['created_at'] ?? '') ?></div>
+        <div class="text-xs text-slate-500">Latest active badge token: <?= App\Core\Helpers::e($badge_token_preview['token_prefix'] ?? '') ?>**** created <?= App\Core\Helpers::formatDateTime($badge_token_preview['created_at'] ?? null) ?></div>
       <?php endif; ?>
     </div>
 
@@ -173,7 +173,7 @@
         <div class="text-sm text-slate-500">
           <?= App\Core\Helpers::e($t['token_prefix']) ?>****
           (<?= App\Core\Helpers::e($t['token_type'] ?? 'agent') ?>)
-          created <?= App\Core\Helpers::e($t['created_at']) ?>
+          created <?= App\Core\Helpers::formatDateTime($t['created_at']) ?>
         </div>
       <?php endforeach; ?>
     </div>
@@ -192,7 +192,7 @@
       <div class="flex items-center justify-between bg-mist rounded p-3">
         <div>
           <div class="font-semibold">Backup #<?= $b['id'] ?></div>
-          <div class="text-slate-500 text-sm"><?= App\Core\Helpers::e($b['status']) ?> | <?= App\Core\Helpers::e($b['created_at']) ?></div>
+          <div class="text-slate-500 text-sm"><?= App\Core\Helpers::e($b['status']) ?> | <?= App\Core\Helpers::formatDateTime($b['created_at']) ?></div>
         </div>
         <div class="flex gap-3">
           <button class="text-brand" onclick="signDownload(<?= $b['id'] ?>)">Download .scx</button>

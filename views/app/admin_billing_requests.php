@@ -46,7 +46,7 @@
             <td class="py-3">$<?= number_format((float)$r['amount_total'], 2) ?> <?= App\Core\Helpers::e($r['currency']) ?></td>
             <td class="py-3"><?= App\Core\Helpers::e($r['proof_reference']) ?></td>
             <td class="py-3"><?= App\Core\Helpers::e($r['status']) ?></td>
-            <td class="py-3"><?= App\Core\Helpers::e($r['created_at']) ?></td>
+            <td class="py-3"><?= App\Core\Helpers::formatDateTime($r['created_at']) ?></td>
             <td class="py-3">
               <a href="<?= App\Core\Helpers::baseUrl('/admin/billing/requests/' . $r['id']) ?>" class="text-brand">Review</a>
             </td>
@@ -57,4 +57,3 @@
   </div>
 </div>
 <?php $content = ob_get_clean(); $pageTitle = 'Billing Approvals'; include __DIR__ . '/../layouts/app.php'; ?>
-

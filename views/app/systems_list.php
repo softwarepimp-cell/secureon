@@ -23,8 +23,8 @@
       <div>
         <div class="font-semibold"><?= App\Core\Helpers::e($s['name']) ?></div>
         <div class="text-slate-500 text-sm"><?= App\Core\Helpers::e($s['environment']) ?> | <?= App\Core\Helpers::e($s['timezone']) ?></div>
-        <div class="text-slate-500 text-sm">Last backup: <?= App\Core\Helpers::e($s['last_backup'] ?? 'N/A') ?></div>
-        <div class="text-slate-500 text-sm">Next expected: <?= App\Core\Helpers::e($s['next_expected'] ?? 'N/A') ?></div>
+        <div class="text-slate-500 text-sm">Last backup: <?= App\Core\Helpers::formatDateTime($s['last_backup'] ?? null) ?></div>
+        <div class="text-slate-500 text-sm">Next expected: <?= App\Core\Helpers::formatDateTime($s['next_expected'] ?? null) ?></div>
       </div>
       <?php if (empty($entitlements['active'])): ?>
         <div class="text-xs px-2 py-1 rounded bg-red-100 text-red-700">Billing required</div>

@@ -16,7 +16,13 @@
     <option value="staging">Staging</option>
     <option value="dev">Development</option>
   </select>
-  <input name="timezone" type="text" placeholder="Timezone (e.g. UTC)" class="w-full px-4 py-2 rounded bg-white border border-slate-300">
+  <select name="timezone" class="w-full px-4 py-2 rounded bg-white border border-slate-300">
+    <?php foreach (($common_timezones ?? App\Core\Helpers::commonTimezones()) as $tzKey => $tzLabel): ?>
+      <option value="<?= App\Core\Helpers::e($tzKey) ?>" <?= (($default_timezone ?? App\Core\Helpers::appTimezone()) === $tzKey) ? 'selected' : '' ?>>
+        <?= App\Core\Helpers::e($tzLabel) ?>
+      </option>
+    <?php endforeach; ?>
+  </select>
   <select name="interval_minutes" class="w-full px-4 py-2 rounded bg-white border border-slate-300">
     <option value="30">Every 30 minutes</option>
     <option value="60" selected>Every 60 minutes</option>

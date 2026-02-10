@@ -61,6 +61,7 @@ $router->get('/alerts', 'DashboardController@alerts', [new AuthMiddleware()]);
 $router->get('/settings', 'DashboardController@settings', [new AuthMiddleware()]);
 $router->post('/settings/profile', 'DashboardController@updateProfile', [new AuthMiddleware()]);
 $router->post('/settings/password', 'DashboardController@updatePassword', [new AuthMiddleware()]);
+$router->post('/settings/timezone', 'DashboardController@updateTimezone', [new AuthMiddleware()]);
 $router->get('/billing', 'BillingController@index', [new AuthMiddleware()]);
 $router->post('/billing/estimate', 'BillingController@estimate', [new AuthMiddleware()]);
 $router->post('/billing/request', 'BillingController@requestPayment', [new AuthMiddleware()]);

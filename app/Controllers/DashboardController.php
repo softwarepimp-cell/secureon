@@ -52,7 +52,13 @@ class DashboardController extends Controller
     public function settings()
     {
         $user = Auth::user();
-        $this->view('app/settings', ['user' => $user]);
+        $this->view('app/settings', [
+            'user' => $user,
+            'common_timezones' => Helpers::commonTimezones(),
+            'active_timezone' => Helpers::userTimezone(),
+            'server_timezone' => Helpers::appTimezone(),
+            'timezone_persistence_db' => User::hasTimezoneColumn(),
+        ]);
     }
 
     public function alerts()
@@ -94,6 +100,24 @@ class DashboardController extends Controller
             AuditLog::log('password_update', $user['id'], null, []);
         }
         Helpers::redirect('/settings');
+    }
+
+    public function updateTimezone()
+    {
+        $user = Auth::user();
+        if (!\App\Core\CSRF::validate($_POST['_csrf'] ?? '')) {
+            Helpers::redirect('/settings');
+        }
+
+        $selected = trim((string)($_POST['timezone'] ?? Helpers::appTimezone()));
+        if (!Helpers::isValidTimezone($selected)) {
+            Helpers::redirect('/settings?tz=invalid');
+        }
+
+        $selected = Helpers::setUserTimezone($selected);
+        User::updateTimezone($user['id'], $selected);
+        AuditLog::log('timezone_update', $user['id'], null, ['timezone' => $selected]);
+        Helpers::redirect('/settings?tz=updated');
     }
 
     public function admin()

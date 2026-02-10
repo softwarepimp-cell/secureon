@@ -41,7 +41,7 @@
                 <span class="text-xs px-2 py-1 rounded bg-amber-100 text-amber-700">pending</span>
               <?php endif; ?>
             </td>
-            <td class="py-3"><?= App\Core\Helpers::e($r['created_at']) ?></td>
+            <td class="py-3"><?= App\Core\Helpers::formatDateTime($r['created_at']) ?></td>
             <td class="py-3 text-slate-500"><?= App\Core\Helpers::e($r['admin_note'] ?? '') ?></td>
           </tr>
         <?php endforeach; ?>
@@ -50,4 +50,3 @@
   </div>
 </div>
 <?php $content = ob_get_clean(); $pageTitle = 'Billing Requests'; include __DIR__ . '/../layouts/app.php'; ?>
-

@@ -79,6 +79,20 @@ $loadDotEnv = static function (string $filePath): void {
 $projectRoot = dirname(__DIR__, 2);
 $loadDotEnv($projectRoot . '/.env');
 
+$envValue = static function (string $key, $default = null) {
+    $value = $_ENV[$key] ?? getenv($key);
+    if ($value === false || $value === null || $value === '') {
+        return $default;
+    }
+    return $value;
+};
+
+$appTimezone = (string)$envValue('APP_TIMEZONE', 'Africa/Harare');
+if (!in_array($appTimezone, timezone_identifiers_list(), true)) {
+    $appTimezone = 'Africa/Harare';
+}
+date_default_timezone_set($appTimezone);
+
 $env = static function (string $key, $default = null) {
     $value = $_ENV[$key] ?? getenv($key);
     if ($value === false || $value === null || $value === '') {
@@ -131,6 +145,8 @@ return [
     'DB_USER' => (string)$env('DB_USER', 'root'),
     'DB_PASS' => (string)$env('DB_PASS', ''),
     'APP_KEY' => (string)$env('APP_KEY', 'change-this-32+chars-secret-key'),
+    'APP_TIMEZONE' => $appTimezone,
+    'DB_TIMEZONE_OFFSET' => (string)$env('DB_TIMEZONE_OFFSET', '+02:00'),
     'BASE_URL' => $detectBaseUrl(),
     'STORAGE_PATH' => $resolveStoragePath((string)$env('STORAGE_PATH', 'storage')),
     'DEV_MODE' => filter_var((string)$env('DEV_MODE', 'true'), FILTER_VALIDATE_BOOLEAN),

@@ -48,6 +48,8 @@ class SystemsController extends Controller
             'min_interval' => $minInterval,
             'allowed_systems' => (int)$guard['entitlements']['allowed_systems'],
             'systems_count' => (int)$guard['usage']['systems_count'],
+            'default_timezone' => Helpers::userTimezone(),
+            'common_timezones' => Helpers::commonTimezones(),
         ]);
     }
 
@@ -59,10 +61,14 @@ class SystemsController extends Controller
         $user = Auth::user();
         $name = trim($_POST['name'] ?? '');
         $environment = trim($_POST['environment'] ?? 'production');
-        $timezone = trim($_POST['timezone'] ?? 'UTC');
+        $timezone = trim($_POST['timezone'] ?? Helpers::appTimezone());
         $interval = (int)($_POST['interval_minutes'] ?? 60);
         if (!$name) {
             $this->view('app/systems_new', ['error' => 'Name is required.']);
+            return;
+        }
+        if (!Helpers::isValidTimezone($timezone)) {
+            $this->view('app/systems_new', ['error' => 'Invalid timezone selected.']);
             return;
         }
         $guard = Billing::ensureCanCreateSystem($user['id']);

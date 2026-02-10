@@ -153,7 +153,7 @@ class ApiController extends Controller
             'storage_used' => $storage,
             'storage_quota' => $quota,
             'billing_active' => (bool)$entitlements['active'],
-            'billing_ends_at' => $entitlements['ends_at'],
+            'billing_ends_at' => Helpers::formatDateTime($entitlements['ends_at'] ?? null),
             'allowed_systems' => (int)$entitlements['allowed_systems'],
             'storage_chart' => [
                 'labels' => $labels,
@@ -175,6 +175,11 @@ class ApiController extends Controller
             return;
         }
         $latest = Backup::latestEvent($id);
+        if ($latest) {
+            $latest['started_at'] = Helpers::formatDateTime($latest['started_at'] ?? null);
+            $latest['completed_at'] = Helpers::formatDateTime($latest['completed_at'] ?? null);
+            $latest['event_time'] = Helpers::formatDateTime($latest['event_time'] ?? null);
+        }
         $this->json($latest ?: []);
     }
 
@@ -272,7 +277,7 @@ class ApiController extends Controller
                     'system_name' => $system['name'],
                     'status' => $latest['status'],
                     'message' => $latest['message'],
-                    'event_time' => $latest['event_time'],
+                    'event_time' => Helpers::formatDateTime($latest['event_time'] ?? null),
                 ];
             }
         }
@@ -322,7 +327,10 @@ class ApiController extends Controller
         $stmt = DB::conn()->prepare('INSERT INTO download_tokens (backup_id, token_hash, expires_at, created_at) VALUES (?, ?, ?, NOW())');
         $stmt->execute([$backup['id'], $hash, $expires]);
         AuditLog::log('download_signed', $user['id'], $backup['system_id'], ['backup_id' => $backup['id']]);
-        $this->json(['url' => Helpers::baseUrl('/download/' . $token), 'expires_at' => $expires]);
+        $this->json([
+            'url' => Helpers::baseUrl('/download/' . $token),
+            'expires_at' => Helpers::formatDateTime($expires),
+        ]);
     }
 
     public function deleteBackup($id)

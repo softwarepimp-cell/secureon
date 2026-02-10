@@ -15,7 +15,7 @@
     <div class="mt-4 bg-red-50 border border-red-200 text-red-700 text-sm rounded px-4 py-3">
       Billing required: backups, triggers, downloads, and new systems are blocked until a payment request is approved.
       <?php if (!empty($latest_subscription['ends_at'])): ?>
-        Last subscription ended at <?= App\Core\Helpers::e($latest_subscription['ends_at']) ?>.
+        Last subscription ended at <?= App\Core\Helpers::formatDateTime($latest_subscription['ends_at']) ?>.
       <?php endif; ?>
     </div>
   <?php endif; ?>
@@ -24,7 +24,7 @@
     <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
       <div class="text-slate-500 text-sm">Current Plan</div>
       <div class="text-xl font-semibold mt-1"><?= App\Core\Helpers::e($subscription['plan_name'] ?? 'Inactive') ?></div>
-      <div class="text-slate-500 text-sm mt-2">Expiry: <?= App\Core\Helpers::e($subscription['ends_at'] ?? 'N/A') ?></div>
+      <div class="text-slate-500 text-sm mt-2">Expiry: <?= App\Core\Helpers::formatDateTime($subscription['ends_at'] ?? null) ?></div>
     </div>
     <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
       <div class="text-slate-500 text-sm">Usage</div>
@@ -175,4 +175,3 @@ function billingPage() {
 }
 </script>
 <?php $content = ob_get_clean(); $pageTitle = 'Billing'; include __DIR__ . '/../layouts/app.php'; ?>
-

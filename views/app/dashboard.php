@@ -4,7 +4,7 @@
     <div class="mb-6 bg-red-50 border border-red-200 text-red-700 text-sm rounded px-4 py-3">
       Billing required: submit a payment request to activate backups and triggers.
       <?php if (!empty($latest_subscription['ends_at'])): ?>
-        Last subscription ended at <?= App\Core\Helpers::e($latest_subscription['ends_at']) ?>.
+        Last subscription ended at <?= App\Core\Helpers::formatDateTime($latest_subscription['ends_at']) ?>.
       <?php endif; ?>
       <a href="<?= App\Core\Helpers::baseUrl('/billing') ?>" class="underline ml-2">Open Billing</a>
     </div>
@@ -65,7 +65,7 @@
         <?php foreach ($late_systems as $ls): ?>
           <div class="flex items-center justify-between bg-mist rounded p-3 text-sm">
             <div class="font-semibold"><?= App\Core\Helpers::e($ls['name']) ?></div>
-            <div class="text-slate-500"><?= App\Core\Helpers::e($ls['last_completed']) ?></div>
+            <div class="text-slate-500"><?= App\Core\Helpers::formatDateTime($ls['last_completed']) ?></div>
           </div>
         <?php endforeach; ?>
       </div>

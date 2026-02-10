@@ -2,9 +2,12 @@
 namespace App\Models;
 
 use App\Core\DB;
+use App\Core\Helpers;
 
 class User
 {
+    private static $hasTimezoneColumn = null;
+
     public static function find($id)
     {
         $stmt = DB::conn()->prepare('SELECT * FROM users WHERE id = ?');
@@ -21,8 +24,13 @@ class User
 
     public static function create($name, $email, $passwordHash)
     {
-        $stmt = DB::conn()->prepare('INSERT INTO users (name, email, password_hash, role, status, created_at) VALUES (?, ?, ?, ?, ?, NOW())');
-        $stmt->execute([$name, $email, $passwordHash, 'user', 'active']);
+        if (self::hasTimezoneColumn()) {
+            $stmt = DB::conn()->prepare('INSERT INTO users (name, email, password_hash, role, status, timezone, created_at) VALUES (?, ?, ?, ?, ?, ?, NOW())');
+            $stmt->execute([$name, $email, $passwordHash, 'user', 'active', Helpers::appTimezone()]);
+        } else {
+            $stmt = DB::conn()->prepare('INSERT INTO users (name, email, password_hash, role, status, created_at) VALUES (?, ?, ?, ?, ?, NOW())');
+            $stmt->execute([$name, $email, $passwordHash, 'user', 'active']);
+        }
         return DB::conn()->lastInsertId();
     }
 
@@ -65,6 +73,31 @@ class User
     {
         $stmt = DB::conn()->prepare('UPDATE users SET role = ? WHERE id = ?');
         return $stmt->execute([$role, $id]);
+    }
+
+    public static function updateTimezone($id, $timezone): bool
+    {
+        if (!self::hasTimezoneColumn()) {
+            return false;
+        }
+        $stmt = DB::conn()->prepare('UPDATE users SET timezone = ? WHERE id = ?');
+        return $stmt->execute([$timezone, $id]);
+    }
+
+    public static function hasTimezoneColumn(): bool
+    {
+        if (self::$hasTimezoneColumn !== null) {
+            return self::$hasTimezoneColumn;
+        }
+
+        try {
+            $stmt = DB::conn()->query("SHOW COLUMNS FROM users LIKE 'timezone'");
+            self::$hasTimezoneColumn = (bool)$stmt->fetch();
+        } catch (\Throwable $e) {
+            self::$hasTimezoneColumn = false;
+        }
+
+        return self::$hasTimezoneColumn;
     }
 }
 

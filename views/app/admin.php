@@ -90,7 +90,7 @@
             </td>
             <td class="py-3"><?= (int)$u['systems_count'] ?></td>
             <td class="py-3"><?= App\Core\Helpers::formatBytes((int)$u['storage_used']) ?></td>
-            <td class="py-3"><?= App\Core\Helpers::e($u['last_backup'] ?? 'N/A') ?></td>
+            <td class="py-3"><?= App\Core\Helpers::formatDateTime($u['last_backup'] ?? null) ?></td>
             <td class="py-3">
               <?php if (($u['status'] ?? 'active') === 'suspended'): ?>
                 <form method="post" action="<?= App\Core\Helpers::baseUrl('/admin/users/' . $u['id'] . '/unsuspend') ?>">

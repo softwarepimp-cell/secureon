@@ -5,7 +5,7 @@
     <div class="bg-white border border-slate-200 rounded-xl p-4 flex items-center justify-between shadow-sm">
       <div>
         <div class="font-semibold">Backup #<?= $b['id'] ?> | <?= App\Core\Helpers::e($b['system_name']) ?></div>
-        <div class="text-slate-500 text-sm"><?= App\Core\Helpers::e($b['status']) ?> | <?= App\Core\Helpers::e($b['created_at']) ?></div>
+        <div class="text-slate-500 text-sm"><?= App\Core\Helpers::e($b['status']) ?> | <?= App\Core\Helpers::formatDateTime($b['created_at']) ?></div>
       </div>
       <div class="flex gap-3">
         <button class="text-brand" onclick="signDownload(<?= $b['id'] ?>)">Download .scx</button>
