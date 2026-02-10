@@ -24,3 +24,7 @@ Thumbs.db
 NewTextDocument.php
 New Text Document.php
 New Text Document.txt
+
+# Do not share to remote
+README.md
+database/
