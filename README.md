@@ -114,28 +114,28 @@ These migrations add:
 
 ## App Configuration
 
-Edit `app/Core/config.php`:
+Create a root `.env` file (you can copy `.env.example`):
 
-```php
-return [
-    'DB_HOST' => '127.0.0.1',
-    'DB_NAME' => 'secureon',
-    'DB_USER' => 'root',
-    'DB_PASS' => '',
-    'APP_KEY' => 'change-this-32+chars-secret-key',
-    'BASE_URL' => 'https://your-domain.com/secure',
-    'STORAGE_PATH' => __DIR__ . '/../../storage',
-    'DEV_MODE' => true,
-    'DEFAULT_CURRENCY' => 'USD',
-    'BILLING_GRACE_DAYS' => 0,
-    'MAX_BILLING_MONTHS' => 60,
-];
+```dotenv
+DB_HOST=127.0.0.1
+DB_NAME=secureon
+DB_USER=root
+DB_PASS=
+APP_KEY=change-this-32+chars-secret-key
+BASE_URL=https://your-domain.com/secure
+STORAGE_PATH=storage
+DEV_MODE=true
+DEFAULT_CURRENCY=USD
+BILLING_GRACE_DAYS=0
+MAX_BILLING_MONTHS=60
 ```
+
+`app/Core/config.php` now auto-loads `.env` and falls back to safe defaults if a key is missing.
 
 ### Important config notes
 - `APP_KEY` must remain stable. Changing it can break SQL decrypt for older backups.
 - `BASE_URL` should match how you access Secureon in browser.
-- `DEV_MODE=true` relaxes manual trigger rate-limit behavior to support testing.
+- `DEV_MODE=true` in `.env` relaxes manual trigger rate-limit behavior to support testing.
 
 ## Routing and URL Access (XAMPP)
 
@@ -480,7 +480,7 @@ C:\x\php\php.exe
 - Generate a new bundle and run a fresh backup
 
 ### Trigger returns `rate_limited` while testing
-- `DEV_MODE=true` in `app/Core/config.php` relaxes manual trigger checks
+- `DEV_MODE=true` in `.env` relaxes manual trigger checks
 - Agent config includes `dev_mode` value from Secureon at bundle generation time
 
 ### Logout goes to folder listing
